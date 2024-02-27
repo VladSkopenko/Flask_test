@@ -6,7 +6,7 @@ import os
 
 app = Flask(__name__)
 logging.basicConfig(level="DEBUG")
-
+FILE_PATH = "storage/data.json"
 
 @app.route("/home")
 @app.route("/")
@@ -19,7 +19,7 @@ def index():
 def message():
     if request.method == 'POST':
         try:
-            request_data = request.data.decode()
+            request_data = request.form.to_dict()
             save_data(request_data)
             return jsonify({"message": "Data saved successfully"}), 200
         except Exception as e:
@@ -46,12 +46,10 @@ def send_css(filename):
 def save_data(data):
     try:
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-        new_data = {current_time: {key: value for key, value in [el.split('=') for el in data.split('&')]}}
-
-        file_path = "storage/data.json"
+        new_data = {current_time: data}
 
         try:
-            with open(file_path, "r", encoding="utf-8") as file:
+            with open(FILE_PATH, "r", encoding="utf-8") as file:
                 existing_data = json.load(file)
         except FileNotFoundError:
             existing_data = {}
@@ -60,11 +58,11 @@ def save_data(data):
 
         existing_data.update(new_data)
 
-        with open(file_path, "w", encoding="utf-8") as file:
+        with open(FILE_PATH, "w", encoding="utf-8") as file:
             json.dump(existing_data, file, ensure_ascii=False, indent=2)
 
-        if os.path.exists(file_path):
-            logging.info(f"Data saved to {file_path}")
+        if os.path.exists(FILE_PATH):
+            logging.info(f"Data saved to {FILE_PATH}")
         else:
             logging.error("Data was not saved")
 
@@ -74,4 +72,4 @@ def save_data(data):
         logging.error(f"OSError: {oser}")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True,port=3000)
